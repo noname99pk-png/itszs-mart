@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="ITSZS Mart"/>
+  <meta name="theme-color" content="#f5c542"/>
+  <link rel="manifest" href="./manifest.json"/>
+  <link rel="apple-touch-icon" href="./icon-192.png"/>
+  <title>ITSZS Mart POS</title>
+  <style>
+    :root{
+      --bg:#0f0f0f;--surface:#1a1a1a;--surface2:#242424;--border:#2e2e2e;
+      --accent:#f5c542;--accent2:#ff6b35;--green:#3ddc84;--red:#ff4d4d;
+      --blue:#4d9fff;--text:#f0f0f0;--muted:#777;--radius:14px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+    html,body{height:100%;overflow:hidden;}
+    body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;display:flex;flex-direction:column;}
+
+    /* Header */
+    header{
+      background:var(--surface);border-bottom:1px solid var(--border);
+      padding:calc(12px + var(--safe-top)) 18px 12px;
+      display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+    }
+    .header-left h1{font-size:1.1rem;font-weight:800;letter-spacing:-0.3px;}
+    .header-left h1 span{color:var(--accent);}
+    .header-left p{font-size:0.68rem;color:var(--muted);margin-top:1px;}
+    .clock-box{text-align:right;}
+    .clock-box .time{font-size:0.95rem;font-weight:700;font-variant-numeric:tabular-nums;color:var(--accent);}
+    .clock-box .date{font-size:0.65rem;color:var(--muted);}
+
+    /* Scrollable content */
+    .content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px;padding-bottom:calc(80px + var(--safe-bottom));}
+
+    /* Bottom nav */
+    .bottom-nav{
+      position:fixed;bottom:0;left:0;right:0;
+      background:var(--surface);border-top:1px solid var(--border);
+      display:flex;padding-bottom:var(--safe-bottom);z-index:100;flex-shrink:0;
+    }
+    .nav-btn{
+      flex:1;padding:10px 4px 8px;border:none;background:transparent;
+      color:var(--muted);font-size:0.6rem;font-weight:600;cursor:pointer;
+      display:flex;flex-direction:column;align-items:center;gap:3px;
+      transition:color 0.2s;
+    }
+    .nav-btn .icon{font-size:1.3rem;line-height:1;}
+    .nav-btn.active{color:var(--accent);}
+    .nav-btn.active .icon{filter:drop-shadow(0 0 4px rgba(245,197,66,0.6));}
+
+    /* Panels */
+    .tab-panel{display:none;}.tab-panel.active{display:block;}
+
+    /* Cards */
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;}
+    .card-title{font-size:0.72rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+
+    /* Form */
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .form-row.single{grid-template-columns:1fr;}
+    .form-row.triple{grid-template-columns:1fr 1fr 1fr;}
+    .field label{font-size:0.68rem;color:var(--muted);font-weight:600;display:block;margin-bottom:5px;letter-spacing:0.3px;}
+    input[type=text],input[type=number],select,textarea{
+      width:100%;background:var(--surface2);border:1.5px solid var(--border);
+      color:var(--text);font-size:0.9rem;padding:10px 12px;border-radius:10px;
+      outline:none;transition:border-color 0.2s;-webkit-appearance:none;font-family:inherit;
+    }
+    input:focus,select:focus,textarea:focus{border-color:var(--accent);}
+    textarea{resize:none;height:70px;}
+
+    /* Buttons */
+    .btn{
+      padding:11px 18px;border:none;border-radius:10px;font-weight:700;
+      font-size:0.85rem;cursor:pointer;display:inline-flex;align-items:center;
+      justify-content:center;gap:6px;transition:all 0.15s;font-family:inherit;
+    }
+    .btn:active{transform:scale(0.95);}
+    .btn-full{width:100%;}
+    .btn-primary{background:var(--accent);color:#000;}
+    .btn-green{background:var(--green);color:#000;}
+    .btn-red{background:var(--red);color:#fff;}
+    .btn-blue{background:var(--blue);color:#fff;}
+    .btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text);}
+    .btn-sm{padding:6px 12px;font-size:0.75rem;border-radius:8px;}
+
+    /* Stats */
+    .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+    .stat-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:14px;}
+    .stat-card .slabel{font-size:0.64rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:1px;}
+    .stat-card .sval{font-size:1.5rem;font-weight:800;margin-top:5px;line-height:1;}
+    .stat-card .sdiff{font-size:0.68rem;color:var(--muted);margin-top:3px;}
+
+    /* Table */
+    .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:-4px;}
+    table{width:100%;border-collapse:collapse;font-size:0.78rem;min-width:340px;}
+    thead th{padding:8px 10px;text-align:left;font-size:0.64rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);white-space:nowrap;}
+    tbody tr{border-bottom:1px solid var(--border);}
+    tbody td{padding:9px 10px;vertical-align:middle;}
+    td.bold{font-weight:700;}
+
+    /* Badge */
+    .badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:0.65rem;font-weight:700;white-space:nowrap;}
+    .badge-red{background:#2d0f0f;color:var(--red);}
+    .badge-yellow{background:#2d2400;color:var(--accent);}
+    .badge-green{background:#0a2016;color:var(--green);}
+
+    /* Cart */
+    .cart-item{display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);gap:8px;}
+    .cart-item:last-child{border-bottom:none;}
+    .cart-item-name{flex:1;font-weight:600;font-size:0.88rem;}
+    .cart-item-meta{font-size:0.72rem;color:var(--muted);margin-top:2px;}
+    .qty-ctrl{display:flex;align-items:center;gap:6px;}
+    .qty-btn{width:28px;height:28px;border-radius:8px;border:none;background:var(--surface2);color:var(--text);font-size:1rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+    .qty-val{font-weight:700;font-size:0.9rem;min-width:20px;text-align:center;}
+    .cart-footer{background:var(--surface2);border-radius:var(--radius);padding:14px;margin-top:12px;}
+    .cart-row{display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:6px;}
+    .cart-total-row{display:flex;justify-content:space-between;font-size:1.1rem;font-weight:800;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);}
+
+    /* Scan */
+    .scan-btns{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+    #file-cam{display:none;}
+    .cam-wrap{position:relative;border-radius:var(--radius);overflow:hidden;background:#000;display:none;}
+    #cam-preview{width:100%;max-height:240px;object-fit:cover;display:block;}
+    .scan-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;}
+    .scan-box{width:70%;aspect-ratio:3/2;border:2px solid var(--accent);border-radius:8px;position:relative;box-shadow:0 0 0 2000px rgba(0,0,0,0.45);}
+    .scan-line{position:absolute;left:0;right:0;height:2px;background:var(--accent);box-shadow:0 0 8px var(--accent);animation:scanMove 2s ease-in-out infinite;}
+    @keyframes scanMove{0%{top:10%;}50%{top:85%;}100%{top:10%;}}
+
+    /* Alert box */
+    .alert{padding:10px 14px;border-radius:10px;font-size:0.82rem;font-weight:600;margin-top:10px;display:none;}
+    .alert.show{display:block;}
+    .alert-success{background:#0a2016;color:var(--green);border:1px solid var(--green);}
+    .alert-error{background:#2d0f0f;color:var(--red);border:1px solid var(--red);}
+    .alert-info{background:#0a1a2d;color:var(--blue);border:1px solid var(--blue);}
+
+    /* Modal */
+    .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:200;overflow-y:auto;padding:16px;-webkit-overflow-scrolling:touch;}
+    .modal.show{display:flex;align-items:flex-start;justify-content:center;}
+    .modal-inner{width:100%;max-width:360px;border-radius:var(--radius);overflow:hidden;margin:auto;}
+
+    /* Receipt paper */
+    .receipt{background:#fff;color:#111;padding:22px 18px;font-family:'Courier New',Courier,monospace;}
+    .receipt-header{text-align:center;margin-bottom:12px;}
+    .receipt-shop{font-size:1.3rem;font-weight:900;font-family:Arial,sans-serif;letter-spacing:-0.5px;}
+    .receipt-sub{font-size:0.72rem;color:#444;margin-top:3px;line-height:1.5;}
+    .receipt-div{border:none;border-top:1px dashed #bbb;margin:10px 0;}
+    .receipt-row{display:flex;justify-content:space-between;font-size:0.76rem;margin:4px 0;}
+    .receipt-item{display:flex;justify-content:space-between;font-size:0.8rem;margin:5px 0;}
+    .receipt-total{display:flex;justify-content:space-between;font-size:1.05rem;font-weight:900;margin:8px 0 4px;}
+    .receipt-footer{text-align:center;font-size:0.7rem;color:#555;margin-top:10px;line-height:1.6;}
+    .receipt-actions{background:var(--surface);padding:14px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
+
+    /* Barcode card */
+    .bc-card{background:#fff;color:#111;padding:20px;text-align:center;font-family:Arial,sans-serif;}
+    .bc-shop{font-size:1rem;font-weight:800;margin-bottom:4px;}
+    .bc-product{font-size:1.1rem;font-weight:700;margin:10px 0 4px;}
+    .bc-price{font-size:1.8rem;font-weight:900;color:#111;margin:6px 0 12px;}
+    .bc-img{max-width:260px;width:100%;background:#fff;padding:4px;border:1px solid #ddd;border-radius:4px;}
+    .bc-code{font-size:0.68rem;color:#666;margin-top:6px;letter-spacing:2px;}
+    .bc-actions{background:var(--surface);padding:14px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
+
+    /* Discount modal inner */
+    .discount-inner{background:var(--surface);border-radius:var(--radius);padding:20px;}
+
+    /* Stock alert banner */
+    .stock-banner{background:#2d0f0f;border:1px solid var(--red);border-radius:var(--radius);padding:12px 14px;margin-bottom:12px;display:none;}
+    .stock-banner.show{display:block;}
+    .stock-banner p{font-size:0.8rem;color:var(--red);font-weight:600;}
+
+    /* WhatsApp btn */
+    .btn-wa{background:#25D366;color:#fff;}
+
+    /* Toggle switch */
+    .toggle-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);}
+    .toggle-row:last-child{border-bottom:none;}
+    .toggle-label{font-size:0.85rem;font-weight:600;}
+    .toggle-desc{font-size:0.7rem;color:var(--muted);margin-top:2px;}
+    .toggle{position:relative;width:44px;height:24px;flex-shrink:0;}
+    .toggle input{opacity:0;width:0;height:0;}
+    .toggle-slider{position:absolute;inset:0;background:var(--border);border-radius:24px;cursor:pointer;transition:0.3s;}
+    .toggle-slider:before{content:'';position:absolute;width:18px;height:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:0.3s;}
+    .toggle input:checked+.toggle-slider{background:var(--accent);}
+    .toggle input:checked+.toggle-slider:before{transform:translateX(20px);}
+
+    /* Section divider */
+    .section-label{font-size:0.68rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin:16px 0 8px;padding-left:2px;}
+
+    /* Toast */
+    #toast{position:fixed;bottom:calc(80px + var(--safe-bottom) + 10px);left:50%;transform:translateX(-50%) translateY(10px);background:var(--surface2);border:1px solid var(--border);padding:10px 20px;border-radius:30px;font-weight:600;font-size:0.82rem;opacity:0;transition:all 0.3s;z-index:999;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center;}
+    #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+    #toast.green{border-color:var(--green);color:var(--green);}
+    #toast.red{border-color:var(--red);color:var(--red);}
+    #toast.blue{border-color:var(--blue);color:var(--blue);}
+
+    /* Offline indicator */
+    #offline-bar{background:var(--red);color:#fff;text-align:center;font-size:0.75rem;font-weight:700;padding:6px;display:none;}
+    #offline-bar.show{display:block;}
+
+    /* Empty state */
+    .empty{text-align:center;padding:30px 20px;color:var(--muted);}
+    .empty .emoji{font-size:2.5rem;margin-bottom:10px;}
+    .empty p{font-size:0.85rem;}
+
+    @media print{
+      body>*:not(.modal){display:none!important;}
+      .modal{display:block!important;position:static!important;background:none!important;padding:0!important;}
+      .modal-inner{max-width:100%!important;}
+      .receipt-actions,.bc-actions{display:none!important;}
+    }
+  </style>
+</head>
+<body>
+
+<div id="offline-bar">📴 Offline Mode — Data saved locally</div>
+
+<header>
+  <div class="header-left">
+    <h1>🏪 <span>ITSZS</span> Mart</h1>
+    <p>General Store POS • 03428422207</p>
+  </div>
+  <div class="clock-box">
+    <div class="time" id="clock">--:--</div>
+    <div class="date" id="dateline"></div>
+  </div>
+</header>
+
+<div class="content" id="main-content">
+
+  <!-- ════════════════ SELL ════════════════ -->
+  <div class="tab-panel active" id="tab-sell">
+
+    <!-- Stock Alert Banner -->
+    <div class="stock-banner" id="stock-banner">
+      <p id="stock-banner-text">⚠️ Kuch items ka stock khatam hone wala hai!</p>
+    </div>
+
+    <!-- Customer -->
+    <div class="card">
+      <div class="card-title">👤 Customer Info</div>
+      <div class="form-row" style="margin-bottom:0">
+        <div class="field"><label>Customer Name</label><input type="text" id="cust-name" placeholder="Ahmed Bhai..."/></div>
+        <div class="field"><label>Phone (optional)</label><input type="text" id="cust-phone" placeholder="03xx-xxxxxxx" inputmode="tel"/></div>
+      </div>
+    </div>
+
+    <!-- Scan -->
+    <div class="card">
+      <div class="card-title">📷 Barcode Scan</div>
+      <div class="scan-btns">
+        <button class="btn btn-primary btn-sm" onclick="startCamera()">▶ Camera</button>
+        <button class="btn btn-outline btn-sm" onclick="stopCamera()">■ Stop</button>
+        <label class="btn btn-outline btn-sm" style="cursor:pointer">
+          📱 Photo Scan
+          <input type="file" id="file-cam" accept="image/*" capture="environment" onchange="scanFromPhoto(this)"/>
+        </label>
+      </div>
+      <div class="cam-wrap" id="cam-wrap">
+        <video id="cam-preview" autoplay playsinline muted></video>
+        <canvas id="cam-canvas" style="display:none"></canvas>
+        <div class="scan-overlay">
+          <div class="scan-box"><div class="scan-line"></div></div>
+        </div>
+      </div>
+      <div class="alert" id="scan-alert"></div>
+    </div>
+
+    <!-- Manual -->
+    <div class="card">
+      <div class="card-title">⌨️ Manual Add</div>
+      <div style="display:flex;gap:8px;align-items:flex-end">
+        <div class="field" style="flex:2"><label>Barcode</label><input type="text" id="sell-bc" placeholder="Barcode..." onkeydown="if(event.key==='Enter')addToCart()" inputmode="text" autocomplete="off" autocorrect="off"/></div>
+        <div class="field" style="max-width:80px"><label>Qty</label><input type="number" id="sell-qty" value="1" min="1" inputmode="numeric"/></div>
+        <button class="btn btn-primary btn-sm" style="margin-bottom:0;flex-shrink:0" onclick="addToCart()">Add</button>
+      </div>
+      <div class="alert" id="add-alert"></div>
+    </div>
+
+    <!-- Cart -->
+    <div id="cart-section" style="display:none">
+      <div class="card">
+        <div class="card-title">🛒 Cart <span id="cart-count" style="color:var(--muted);font-size:0.8rem"></span></div>
+        <div id="cart-items-list"></div>
+
+        <!-- Discount -->
+        <div style="margin-top:12px;display:flex;gap:8px;align-items:flex-end">
+          <div class="field" style="flex:1"><label>Discount (Rs)</label><input type="number" id="discount-amt" value="0" min="0" oninput="renderCart()"/></div>
+          <div class="field" style="flex:1"><label>Discount (%)</label><input type="number" id="discount-pct" value="0" min="0" max="100" oninput="applyPctDiscount()"/></div>
+        </div>
+
+        <div class="cart-footer">
+          <div class="cart-row"><span style="color:var(--muted)">Subtotal</span><span id="cart-sub">Rs 0</span></div>
+          <div class="cart-row"><span style="color:var(--red)">Discount</span><span id="cart-disc" style="color:var(--red)">- Rs 0</span></div>
+          <div class="cart-total-row"><span>Total</span><span id="cart-total" style="color:var(--accent)">Rs 0</span></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="btn btn-green" style="flex:1" onclick="checkout()">✅ Checkout</button>
+          <button class="btn btn-outline btn-sm" onclick="clearCart()">🗑</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════ DASHBOARD ════════════════ -->
+  <div class="tab-panel" id="tab-dashboard">
+    <div class="stats-grid" id="dash-stats"></div>
+
+    <div class="card">
+      <div class="card-title">📋 Aaj Ki Sales</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Time</th><th>Customer</th><th>Total</th><th>Slip</th></tr></thead>
+          <tbody id="dash-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚠️ Low Stock Items</div>
+      <div id="low-stock-list"></div>
+    </div>
+  </div>
+
+  <!-- ════════════════ PRODUCTS ════════════════ -->
+  <div class="tab-panel" id="tab-products">
+    <!-- Add Product -->
+    <div class="card">
+      <div class="card-title">➕ Add / Update Product</div>
+      <div class="form-row single" style="margin-bottom:10px">
+        <div class="field"><label>Product Name *</label><input type="text" id="p-name" placeholder="e.g. Pepsi 500ml"/></div>
+      </div>
+      <div class="form-row triple" style="margin-bottom:10px">
+        <div class="field"><label>Buy Price *</label><input type="number" id="p-buy" placeholder="0" min="0" inputmode="numeric"/></div>
+        <div class="field"><label>Sell Price *</label><input type="number" id="p-sell" placeholder="0" min="0" inputmode="numeric"/></div>
+        <div class="field"><label>Stock *</label><input type="number" id="p-stock" placeholder="0" min="0" inputmode="numeric"/></div>
+      </div>
+      <div class="form-row" style="margin-bottom:12px">
+        <div class="field"><label>Barcode (optional)</label><input type="text" id="p-bc" placeholder="Auto generate"/></div>
+        <div class="field"><label>Category</label>
+          <select id="p-cat">
+            <option>General</option><option>Drinks</option><option>Snacks</option>
+            <option>Dairy</option><option>Grocery</option><option>Household</option><option>Other</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="addProduct()">+ Save Product</button>
+        <button class="btn btn-outline btn-sm" onclick="clearPForm()">Clear</button>
+      </div>
+      <!-- Barcode result -->
+      <div id="bc-result" style="display:none;margin-top:12px;padding:12px;background:var(--surface2);border-radius:var(--radius)">
+        <p id="bc-result-label" style="font-weight:700;font-size:0.85rem;margin-bottom:10px;"></p>
+        <button class="btn btn-primary btn-sm" onclick="openBarcodeModal()">🖨 Print Barcode Card</button>
+      </div>
+    </div>
+
+    <!-- Search & list -->
+    <div class="card">
+      <div class="card-title">📦 All Products</div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
+        <input type="text" id="p-search" placeholder="Search..." oninput="renderProducts()" style="flex:1"/>
+        <select id="p-cat-filter" onchange="renderProducts()" style="width:120px;font-size:0.8rem">
+          <option value="">All</option>
+          <option>General</option><option>Drinks</option><option>Snacks</option>
+          <option>Dairy</option><option>Grocery</option><option>Household</option><option>Other</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Product</th><th>Price</th><th>Stock</th><th>Margin</th><th></th></tr></thead>
+          <tbody id="prod-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════ REPORTS ════════════════ -->
+  <div class="tab-panel" id="tab-reports">
+    <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
+      <select id="report-period" onchange="renderReports()" style="flex:1">
+        <option value="today">Today</option>
+        <option value="week">This Week</option>
+        <option value="month" selected>This Month</option>
+        <option value="all">All Time</option>
+      </select>
+      <button class="btn btn-outline btn-sm" onclick="exportCSV()">⬇ CSV</button>
+    </div>
+    <div class="stats-grid" id="report-stats"></div>
+    <div class="card">
+      <div class="card-title">📋 Sales History</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Time</th><th>Customer</th><th>Total</th><th>Profit</th><th></th></tr></thead>
+          <tbody id="report-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <button class="btn btn-red btn-sm" onclick="clearSales()" style="margin-top:4px">🗑 Clear All Sales</button>
+  </div>
+
+  <!-- ════════════════ SETTINGS ════════════════ -->
+  <div class="tab-panel" id="tab-settings">
+    <div class="card">
+      <div class="card-title">🏪 Shop Info</div>
+      <div class="field" style="margin-bottom:10px"><label>Shop Name</label><input type="text" id="set-shopname" value="ITSZS Mart"/></div>
+      <div class="field" style="margin-bottom:10px"><label>Phone</label><input type="text" id="set-phone" value="03428422207" inputmode="tel"/></div>
+      <div class="field" style="margin-bottom:10px"><label>Address</label><input type="text" id="set-addr" placeholder="Your City, Area..."/></div>
+      <div class="field" style="margin-bottom:12px"><label>Receipt Footer Message</label><textarea id="set-footer">Shukriya! Dobara zaroor aayein 🙏&#10;ITSZS Mart — 03428422207</textarea></div>
+      <button class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚙️ Features</div>
+      <div class="toggle-row">
+        <div><div class="toggle-label">Low Stock Alerts</div><div class="toggle-desc">Warn when stock ≤ 5</div></div>
+        <label class="toggle"><input type="checkbox" id="tog-lowstock" checked onchange="saveSettings()"><span class="toggle-slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div><div class="toggle-label">Auto Print Receipt</div><div class="toggle-desc">Print dialog after checkout</div></div>
+        <label class="toggle"><input type="checkbox" id="tog-autoprint" onchange="saveSettings()"><span class="toggle-slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div><div class="toggle-label">WhatsApp Receipt</div><div class="toggle-desc">Send receipt via WhatsApp</div></div>
+        <label class="toggle"><input type="checkbox" id="tog-wa" checked onchange="saveSettings()"><span class="toggle-slider"></span></label>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📦 Backup & Restore</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-outline btn-sm" onclick="backupData()">⬇ Download Backup</button>
+        <label class="btn btn-outline btn-sm" style="cursor:pointer">⬆ Restore Backup<input type="file" accept=".json" style="display:none" onchange="restoreData(this)"/></label>
+      </div>
+      <p style="font-size:0.72rem;color:var(--muted);margin-top:10px">Backup mein sare products aur sales saved hain.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">ℹ️ App Info</div>
+      <p style="font-size:0.8rem;color:var(--muted);line-height:1.7">
+        ITSZS Mart POS v2.0<br>
+        Developer: ITSZS<br>
+        Ph: 03428422207<br>
+        Works offline ✅ | PWA App ✅
+      </p>
+    </div>
+  </div>
+
+</div><!-- end .content -->
+
+<!-- Bottom Nav -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" onclick="switchTab('sell',this)" id="nav-sell">
+    <span class="icon">💰</span>Sell
+  </button>
+  <button class="nav-btn" onclick="switchTab('dashboard',this)" id="nav-dashboard">
+    <span class="icon">📊</span>Dashboard
+  </button>
+  <button class="nav-btn" onclick="switchTab('products',this)" id="nav-products">
+    <span class="icon">📦</span>Products
+  </button>
+  <button class="nav-btn" onclick="switchTab('reports',this)" id="nav-reports">
+    <span class="icon">📈</span>Reports
+  </button>
+  <button class="nav-btn" onclick="switchTab('settings',this)" id="nav-settings">
+    <span class="icon">⚙️</span>Settings
+  </button>
+</nav>
+
+<!-- ════ RECEIPT MODAL ════ -->
+<div class="modal" id="receipt-modal">
+  <div class="modal-inner">
+    <div class="receipt" id="receipt-content">
+      <div class="receipt-header">
+        <div class="receipt-shop" id="r-shopname">ITSZS Mart</div>
+        <div class="receipt-sub" id="r-shopinfo">Ph: 03428422207</div>
+      </div>
+      <hr class="receipt-div"/>
+      <div class="receipt-row"><span>Customer:</span><span id="r-cust"></span></div>
+      <div class="receipt-row"><span>Date:</span><span id="r-date"></span></div>
+      <div class="receipt-row"><span>Time:</span><span id="r-time"></span></div>
+      <div class="receipt-row"><span>Receipt #:</span><span id="r-num"></span></div>
+      <hr class="receipt-div"/>
+      <div id="r-items"></div>
+      <hr class="receipt-div"/>
+      <div class="receipt-row"><span>Subtotal</span><span id="r-sub"></span></div>
+      <div class="receipt-row" id="r-disc-row" style="color:#c00"><span>Discount</span><span id="r-disc"></span></div>
+      <div class="receipt-total"><span>TOTAL</span><span id="r-total"></span></div>
+      <hr class="receipt-div"/>
+      <div class="receipt-footer" id="r-footer">Shukriya! Dobara zaroor aayein 🙏<br>ITSZS Mart — 03428422207</div>
+    </div>
+    <div class="receipt-actions">
+      <button class="btn btn-primary btn-sm" onclick="printModal()">🖨 Print</button>
+      <button class="btn btn-wa btn-sm" id="wa-btn" onclick="sendWhatsApp()">💬 WhatsApp</button>
+      <button class="btn btn-outline btn-sm" style="color:#fff" onclick="closeModal('receipt-modal')">✕ Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ BARCODE CARD MODAL ════ -->
+<div class="modal" id="bc-modal">
+  <div class="modal-inner">
+    <div class="bc-card">
+      <div class="bc-shop" id="bc-shopname">ITSZS Mart</div>
+      <hr style="border:none;border-top:1px dashed #ccc;margin:8px 0"/>
+      <div class="bc-product" id="bc-pname"></div>
+      <div class="bc-price" id="bc-price"></div>
+      <img class="bc-img" id="bc-img" src="" alt="Barcode"/>
+      <div class="bc-code" id="bc-code-text"></div>
+      <hr style="border:none;border-top:1px dashed #ccc;margin:10px 0"/>
+      <div style="font-size:0.65rem;color:#888">ITSZS Mart • 03428422207</div>
+    </div>
+    <div class="bc-actions">
+      <button class="btn btn-primary btn-sm" onclick="printModal()">🖨 Print</button>
+      <a id="bc-dl" class="btn btn-outline btn-sm" style="color:#fff;text-decoration:none" download>⬇ Save Image</a>
+      <button class="btn btn-outline btn-sm" style="color:#fff" onclick="closeModal('bc-modal')">✕ Close</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════════════
+// DATA
+// ════════════════════════════════════════════════════════
+let products = JSON.parse(localStorage.getItem('im_products') || '{}');
+let sales    = JSON.parse(localStorage.getItem('im_sales')    || '[]');
+let settings = JSON.parse(localStorage.getItem('im_settings') || '{}');
+let cart     = [];
+let rcnt     = parseInt(localStorage.getItem('im_rcnt') || '1000');
+let lastBC   = '', lastProd = null;
+let camStream = null, scanTimer = null, scanLock = false;
+
+const DEF_SETTINGS = {
+  shopname:'ITSZS Mart', phone:'03428422207', addr:'', footer:'Shukriya! Dobara zaroor aayein 🙏\nITSZS Mart — 03428422207',
+  lowstock:true, autoprint:false, wa:true
+};
+settings = {...DEF_SETTINGS, ...settings};
+
+function save(){
+  localStorage.setItem('im_products', JSON.stringify(products));
+  localStorage.setItem('im_sales',    JSON.stringify(sales));
+  localStorage.setItem('im_settings', JSON.stringify(settings));
+  localStorage.setItem('im_rcnt',     rcnt);
+}
+
+// ════ Service Worker (PWA offline) ═══════════════════════
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+
+// ════ Online/Offline ══════════════════════════════════════
+window.addEventListener('offline', ()=>document.getElementById('offline-bar').classList.add('show'));
+window.addEventListener('online',  ()=>document.getElementById('offline-bar').classList.remove('show'));
+
+// ════ Clock ═══════════════════════════════════════════════
+function tick(){
+  const n=new Date();
+  document.getElementById('clock').textContent = n.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true});
+  document.getElementById('dateline').textContent = n.toLocaleDateString('en-PK',{weekday:'short',day:'numeric',month:'short'});
+}
+setInterval(tick,1000); tick();
+
+// ════ Toast ═══════════════════════════════════════════════
+function toast(msg,type='green'){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='show '+type;
+  clearTimeout(el._t); el._t=setTimeout(()=>el.className='',2600);
+}
+
+// ════ Alert boxes ══════════════════════════════════════════
+function showAlert(id,msg,type='success'){
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.textContent=msg; el.className='alert show alert-'+type;
+  clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),3500);
+}
+
+// ════ Tabs ════════════════════════════════════════════════
+function switchTab(name,btn){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='dashboard'){renderDashboard();}
+  if(name==='products') {renderProducts();}
+  if(name==='reports')  {renderReports();}
+  if(name==='settings') {loadSettingsUI();}
+}
+
+// ════ Modal ════════════════════════════════════════════════
+function openModal(id){document.getElementById(id).classList.add('show');}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+function printModal(){window.print();}
+
+// ════ CART ════════════════════════════════════════════════
+function addToCart(barcode, qty){
+  barcode = barcode || document.getElementById('sell-bc').value.trim();
+  qty     = qty     || parseInt(document.getElementById('sell-qty').value)||1;
+  if(!barcode){showAlert('add-alert','⚠️ Barcode enter karo','error');return;}
+  const p=products[barcode];
+  if(!p){showAlert('add-alert','❌ Product nahi mila: '+barcode,'error');return;}
+  const existing=cart.find(c=>c.barcode===barcode);
+  const inCartQty=existing?existing.qty:0;
+  if(p.stock<inCartQty+qty){showAlert('add-alert','⚠️ Itna stock nahi! Bacha: '+(p.stock-inCartQty),'error');return;}
+  if(existing){existing.qty+=qty;}
+  else{cart.push({barcode,name:p.name,qty,sell:p.sell,buy:p.buy});}
+  document.getElementById('sell-bc').value='';
+  document.getElementById('sell-qty').value='1';
+  showAlert('add-alert','✅ '+p.name+' cart mein add hua','success');
+  renderCart();
+}
+
+function renderCart(){
+  const sec=document.getElementById('cart-section');
+  if(!cart.length){sec.style.display='none';return;}
+  sec.style.display='block';
+  document.getElementById('cart-count').textContent='('+cart.length+' items)';
+
+  let sub=0;
+  let html='';
+  cart.forEach((item,i)=>{
+    const lineTotal=item.sell*item.qty;
+    sub+=lineTotal;
+    html+=`<div class="cart-item">
+      <div style="flex:1">
+        <div class="cart-item-name">${item.name}</div>
+        <div class="cart-item-meta">Rs ${item.sell} × ${item.qty} = Rs ${lineTotal.toFixed(0)}</div>
+      </div>
+      <div class="qty-ctrl">
+        <button class="qty-btn" onclick="changeQty(${i},-1)">−</button>
+        <span class="qty-val">${item.qty}</span>
+        <button class="qty-btn" onclick="changeQty(${i},1)">+</button>
+        <button class="qty-btn" style="background:var(--red);color:#fff;margin-left:4px" onclick="removeFromCart(${i})">✕</button>
+      </div>
+    </div>`;
+  });
+  document.getElementById('cart-items-list').innerHTML=html;
+
+  const discAmt=parseFloat(document.getElementById('discount-amt').value)||0;
+  const total=Math.max(0,sub-discAmt);
+  document.getElementById('cart-sub').textContent='Rs '+sub.toFixed(0);
+  document.getElementById('cart-disc').textContent='- Rs '+discAmt.toFixed(0);
+  document.getElementById('cart-total').textContent='Rs '+total.toFixed(0);
+}
+
+function changeQty(i,delta){
+  const item=cart[i];
+  const p=products[item.barcode];
+  const newQty=item.qty+delta;
+  if(newQty<=0){removeFromCart(i);return;}
+  if(p&&newQty>p.stock){toast('Stock sirf '+p.stock+' hai!','red');return;}
+  item.qty=newQty;
+  renderCart();
+}
+
+function removeFromCart(i){cart.splice(i,1);renderCart();}
+function clearCart(){
+  cart=[];
+  document.getElementById('discount-amt').value='0';
+  document.getElementById('discount-pct').value='0';
+  renderCart();
+}
+
+function applyPctDiscount(){
+  const pct=parseFloat(document.getElementById('discount-pct').value)||0;
+  let sub=cart.reduce((a,c)=>a+c.sell*c.qty,0);
+  document.getElementById('discount-amt').value=(sub*pct/100).toFixed(0);
+  renderCart();
+}
+
+function checkout(){
+  if(!cart.length){toast('Cart khali hai!','red');return;}
+  const custName =document.getElementById('cust-name').value.trim()||'Walk-in';
+  const custPhone=document.getElementById('cust-phone').value.trim();
+  const discAmt  =parseFloat(document.getElementById('discount-amt').value)||0;
+  const now=new Date();
+  const sid=++rcnt;
+  let sub=0, profit=0;
+  const items=[];
+
+  cart.forEach(item=>{
+    const p=products[item.barcode];
+    if(p) p.stock-=item.qty;
+    sub    +=item.sell*item.qty;
+    profit +=(item.sell-item.buy)*item.qty;
+    items.push({...item});
+  });
+  const total=Math.max(0,sub-discAmt);
+  profit=Math.max(0,profit-discAmt);
+
+  const rec={id:sid, customer:custName, phone:custPhone, items, sub, discount:discAmt, total, profit, date:now.toISOString()};
+  sales.push(rec); save();
+
+  toast('✅ Sale ho gayi! Rs '+total.toFixed(0));
+  clearCart();
+  document.getElementById('cust-name').value='';
+  document.getElementById('cust-phone').value='';
+  openReceiptModal(rec);
+  checkLowStock();
+
+  if(settings.autoprint) setTimeout(()=>window.print(),500);
+}
+
+// ════ RECEIPT ══════════════════════════════════════════════
+function openReceiptModal(sale){
+  const d=new Date(sale.date);
+  const s=settings;
+  document.getElementById('r-shopname').textContent=s.shopname||'ITSZS Mart';
+  document.getElementById('r-shopinfo').textContent=(s.addr?s.addr+' | ':'')+'Ph: '+(s.phone||'03428422207');
+  document.getElementById('r-cust').textContent=sale.customer+(sale.phone?' | '+sale.phone:'');
+  document.getElementById('r-date').textContent=d.toLocaleDateString('en-PK',{day:'2-digit',month:'2-digit',year:'numeric'});
+  document.getElementById('r-time').textContent=d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true});
+  document.getElementById('r-num').textContent='#'+sale.id;
+  document.getElementById('r-sub').textContent='Rs '+(sale.sub||sale.total).toFixed(0);
+  document.getElementById('r-total').textContent='Rs '+sale.total.toFixed(0);
+
+  const discRow=document.getElementById('r-disc-row');
+  if(sale.discount&&sale.discount>0){
+    document.getElementById('r-disc').textContent='- Rs '+sale.discount.toFixed(0);
+    discRow.style.display='flex';
+  } else { discRow.style.display='none'; }
+
+  document.getElementById('r-footer').innerHTML=(s.footer||'Shukriya! ITSZS Mart 03428422207').replace(/\n/g,'<br>');
+  document.getElementById('bc-shopname').textContent=s.shopname||'ITSZS Mart';
+
+  let html='';
+  sale.items.forEach(item=>{
+    html+=`<div class="receipt-item"><span>${item.name} × ${item.qty}</span><span>Rs ${(item.sell*item.qty).toFixed(0)}</span></div>`;
+  });
+  document.getElementById('r-items').innerHTML=html;
+
+  // WhatsApp button
+  const waBtn=document.getElementById('wa-btn');
+  waBtn.style.display=settings.wa?'flex':'none';
+
+  openModal('receipt-modal');
+}
+
+function sendWhatsApp(){
+  const custPhone=document.getElementById('r-cust').textContent;
+  const total=document.getElementById('r-total').textContent;
+  const num=document.getElementById('r-num').textContent;
+  const shopName=settings.shopname||'ITSZS Mart';
+  const msg=`🏪 *${shopName}*\nReceipt ${num}\n\nTotal: *${total}*\n\n${settings.footer||'Shukriya!'}\n📞 ${settings.phone||'03428422207'}`;
+  // Try to send to customer phone if available
+  const phone=(document.getElementById('r-cust').textContent.split('|')[1]||'').trim().replace(/\D/g,'');
+  const waUrl=phone
+    ? `https://wa.me/92${phone.replace(/^0/,'')}?text=${encodeURIComponent(msg)}`
+    : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+  window.open(waUrl,'_blank');
+}
+
+// ════ BARCODE CARD ══════════════════════════════════════════
+function openBarcodeModal(){
+  if(!lastBC||!lastProd)return;
+  const p=lastProd, bc=lastBC;
+  const imgUrl='https://barcode.tec-it.com/barcode.ashx?data='+encodeURIComponent(bc)+'&code=Code128&dpi=96&unit=Fit&width=260&height=80';
+  document.getElementById('bc-pname').textContent=p.name;
+  document.getElementById('bc-price').textContent='Rs '+p.sell.toFixed(0);
+  document.getElementById('bc-img').src=imgUrl;
+  document.getElementById('bc-code-text').textContent=bc;
+  document.getElementById('bc-dl').href=imgUrl;
+  document.getElementById('bc-dl').download=(p.name.replace(/\s+/g,'_'))+'_barcode.png';
+  openModal('bc-modal');
+}
+
+function showBarcodeFor(bc){
+  lastBC=bc; lastProd=products[bc];
+  openBarcodeModal();
+}
+
+// ════ CAMERA ════════════════════════════════════════════════
+async function startCamera(){
+  try{
+    camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}});
+    const v=document.getElementById('cam-preview');
+    v.srcObject=camStream;
+    document.getElementById('cam-wrap').style.display='block';
+    scanTimer=setInterval(()=>captureFrame(v),600);
+    toast('Camera shuru hua 📷');
+  }catch(e){toast('Camera error — Photo Scan try karo','red');}
+}
+
+function stopCamera(){
+  if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
+  clearInterval(scanTimer);scanTimer=null;
+  document.getElementById('cam-wrap').style.display='none';
+}
+
+async function captureFrame(v){
+  if(!('BarcodeDetector' in window)||scanLock) return;
+  const c=document.getElementById('cam-canvas');
+  c.width=v.videoWidth; c.height=v.videoHeight;
+  c.getContext('2d').drawImage(v,0,0);
+  try{
+    const bd=new BarcodeDetector({formats:['code_128','ean_13','ean_8','upc_a','upc_e','qr_code']});
+    const codes=await bd.detect(c);
+    if(codes.length){
+      scanLock=true;
+      stopCamera();
+      addToCart(codes[0].rawValue,1);
+      showAlert('scan-alert','✅ Scanned: '+codes[0].rawValue,'success');
+      setTimeout(()=>scanLock=false,2000);
+    }
+  }catch(e){}
+}
+
+async function scanFromPhoto(input){
+  const file=input.files[0]; if(!file)return;
+  const img=new Image();
+  img.onload=async()=>{
+    const c=document.getElementById('cam-canvas');
+    c.width=img.width; c.height=img.height;
+    c.getContext('2d').drawImage(img,0,0);
+    if(!('BarcodeDetector' in window)){
+      showAlert('scan-alert','❌ Is browser mein auto scan nahi — manual barcode type karo','error');
+      return;
+    }
+    try{
+      const bd=new BarcodeDetector({formats:['code_128','ean_13','ean_8','upc_a','upc_e','qr_code']});
+      const codes=await bd.detect(c);
+      if(codes.length){
+        addToCart(codes[0].rawValue,1);
+        showAlert('scan-alert','✅ Photo scan hua: '+codes[0].rawValue,'success');
+      } else {
+        showAlert('scan-alert','❌ Barcode nahi mila — barcode clearly dikhao','error');
+      }
+    }catch(e){showAlert('scan-alert','❌ Scan fail hua','error');}
+  };
+  img.src=URL.createObjectURL(file);
+  input.value='';
+}
+
+// ════ ADD PRODUCT ════════════════════════════════════════════
+function addProduct(){
+  const name =document.getElementById('p-name').value.trim();
+  const buy  =parseFloat(document.getElementById('p-buy').value);
+  const sell =parseFloat(document.getElementById('p-sell').value);
+  const stock=parseInt(document.getElementById('p-stock').value);
+  const cat  =document.getElementById('p-cat').value;
+  let   bc   =document.getElementById('p-bc').value.trim();
+
+  if(!name)       {toast('Product name dalo','red');return;}
+  if(isNaN(buy))  {toast('Buy price dalo','red');return;}
+  if(isNaN(sell)) {toast('Sell price dalo','red');return;}
+  if(isNaN(stock)){toast('Stock dalo','red');return;}
+  if(!bc) bc='GS'+Date.now();
+
+  if(products[bc]){
+    products[bc]={...products[bc],name,buy,sell,stock:products[bc].stock+stock,cat};
+    toast('Product update ho gaya!');
+  } else {
+    products[bc]={name,buy,sell,stock,cat};
+    toast('Product add ho gaya! ✅');
+  }
+  save();
+  lastBC=bc; lastProd=products[bc];
+  document.getElementById('bc-result-label').textContent=name+' | '+bc;
+  document.getElementById('bc-result').style.display='block';
+  clearPForm(true);
+  renderProducts();
+  checkLowStock();
+}
+
+function clearPForm(keepResult){
+  ['p-name','p-buy','p-sell','p-stock','p-bc'].forEach(id=>document.getElementById(id).value='');
+  if(!keepResult){document.getElementById('bc-result').style.display='none';lastBC='';lastProd=null;}
+}
+
+// ════ RENDER PRODUCTS ════════════════════════════════════════
+function renderProducts(){
+  const q=(document.getElementById('p-search').value||'').toLowerCase();
+  const cat=document.getElementById('p-cat-filter').value;
+  const tbody=document.getElementById('prod-tbody');
+  const keys=Object.keys(products).filter(bc=>{
+    const p=products[bc];
+    const matchQ=p.name.toLowerCase().includes(q)||bc.toLowerCase().includes(q);
+    const matchC=!cat||(p.cat||'General')===cat;
+    return matchQ&&matchC;
+  });
+  if(!keys.length){
+    tbody.innerHTML='<tr><td colspan="5"><div class="empty"><div class="emoji">📦</div><p>Koi product nahi</p></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML=keys.map(bc=>{
+    const p=products[bc];
+    const margin=p.buy>0?(((p.sell-p.buy)/p.buy)*100).toFixed(0)+'%':'—';
+    const badge=p.stock===0?'<span class="badge badge-red">Out</span>':
+                p.stock<=5 ?`<span class="badge badge-yellow">${p.stock}</span>`:
+                             `<span class="badge badge-green">${p.stock}</span>`;
+    return `<tr>
+      <td class="bold">${p.name}<br><span style="font-size:0.65rem;color:var(--muted)">${bc}</span></td>
+      <td>Rs ${p.sell.toFixed(0)}</td>
+      <td>${badge}</td>
+      <td style="color:var(--green)">${margin}</td>
+      <td>
+        <button class="btn btn-sm" style="background:var(--green);color:#000;margin-bottom:3px" onclick="addToCart('${bc}',1);renderProducts()">+Cart</button><br>
+        <button class="btn btn-sm btn-outline" style="margin-bottom:3px" onclick="showBarcodeFor('${bc}')">🏷️</button>
+        <button class="btn btn-sm btn-outline" onclick="deleteProduct('${bc}')" style="color:var(--red);border-color:var(--red)">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function deleteProduct(bc){
+  if(!confirm('"'+products[bc].name+'" delete karna chahte ho?'))return;
+  delete products[bc]; save(); renderProducts(); toast('Delete ho gaya','red');
+}
+
+// ════ DASHBOARD ══════════════════════════════════════════════
+function renderDashboard(){
+  const today=new Date().toDateString();
+  const ts=sales.filter(s=>new Date(s.date).toDateString()===today);
+  const rev =ts.reduce((a,s)=>a+(s.total||0),0);
+  const pr  =ts.reduce((a,s)=>a+(s.profit||0),0);
+  const low =Object.values(products).filter(p=>p.stock<=5).length;
+
+  document.getElementById('dash-stats').innerHTML=`
+    <div class="stat-card"><div class="slabel">Aaj Revenue</div><div class="sval" style="color:var(--accent)">Rs ${rev.toFixed(0)}</div></div>
+    <div class="stat-card"><div class="slabel">Aaj Profit</div><div class="sval" style="color:var(--green)">Rs ${pr.toFixed(0)}</div></div>
+    <div class="stat-card"><div class="slabel">Aaj Sales</div><div class="sval" style="color:var(--accent2)">${ts.length}</div></div>
+    <div class="stat-card"><div class="slabel">Low Stock</div><div class="sval" style="color:var(--red)">${low}</div></div>
+  `;
+
+  const tbody=document.getElementById('dash-tbody');
+  if(!ts.length){
+    tbody.innerHTML='<tr><td colspan="4"><div class="empty"><div class="emoji">🛒</div><p>Aaj koi sale nahi</p></div></td></tr>';
+  } else {
+    tbody.innerHTML=[...ts].reverse().map(s=>{
+      const d=new Date(s.date);
+      return `<tr>
+        <td>${d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true})}</td>
+        <td class="bold">${s.customer||'Walk-in'}</td>
+        <td style="color:var(--accent)">Rs ${(s.total||0).toFixed(0)}</td>
+        <td><button class="btn btn-sm btn-outline" onclick='openReceiptModal(${JSON.stringify(s).replace(/'/g,"&#39;")})'>🧾</button></td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Low stock list
+  const lowItems=Object.entries(products).filter(([,p])=>p.stock<=5);
+  const lowEl=document.getElementById('low-stock-list');
+  if(!lowItems.length){
+    lowEl.innerHTML='<p style="color:var(--green);font-size:0.85rem;padding:8px 0">✅ Sab items ka stock theek hai</p>';
+  } else {
+    lowEl.innerHTML=lowItems.map(([bc,p])=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+        <span style="font-weight:600;font-size:0.85rem">${p.name}</span>
+        <span class="${p.stock===0?'badge badge-red':'badge badge-yellow'}">${p.stock===0?'OUT':p.stock+' left'}</span>
+      </div>`).join('');
+  }
+}
+
+// ════ REPORTS ════════════════════════════════════════════════
+function renderReports(){
+  const period=document.getElementById('report-period').value;
+  const now=new Date();
+  const filtered=sales.filter(s=>{
+    const d=new Date(s.date);
+    if(period==='today') return d.toDateString()===now.toDateString();
+    if(period==='week')  return (now-d)<=7*864e5;
+    if(period==='month') return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();
+    return true;
+  });
+  const rev   =filtered.reduce((a,s)=>a+(s.total||0),0);
+  const pr    =filtered.reduce((a,s)=>a+(s.profit||0),0);
+  const margin=rev>0?((pr/rev)*100).toFixed(1):0;
+
+  document.getElementById('report-stats').innerHTML=`
+    <div class="stat-card"><div class="slabel">Revenue</div><div class="sval" style="color:var(--accent)">Rs ${rev.toFixed(0)}</div></div>
+    <div class="stat-card"><div class="slabel">Profit</div><div class="sval" style="color:var(--green)">Rs ${pr.toFixed(0)}</div></div>
+    <div class="stat-card"><div class="slabel">Sales</div><div class="sval" style="color:var(--accent2)">${filtered.length}</div></div>
+    <div class="stat-card"><div class="slabel">Margin</div><div class="sval" style="color:var(--accent2)">${margin}%</div></div>
+  `;
+
+  const tbody=document.getElementById('report-tbody');
+  if(!filtered.length){
+    tbody.innerHTML='<tr><td colspan="5"><div class="empty"><div class="emoji">📊</div><p>Is period mein koi sale nahi</p></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML=[...filtered].reverse().map(s=>{
+    const d=new Date(s.date);
+    return `<tr>
+      <td style="font-size:0.75rem">${d.toLocaleDateString('en-PK',{day:'2-digit',month:'2-digit'})} ${d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true})}</td>
+      <td class="bold">${s.customer||'Walk-in'}</td>
+      <td style="color:var(--accent)">Rs ${(s.total||0).toFixed(0)}</td>
+      <td style="color:var(--green)">Rs ${(s.profit||0).toFixed(0)}</td>
+      <td><button class="btn btn-sm btn-outline" onclick='openReceiptModal(${JSON.stringify(s).replace(/'/g,"&#39;")})'>🧾</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function clearSales(){
+  if(!confirm('Sari sales delete? Wapas nahi aayengi.'))return;
+  sales=[]; save(); renderReports(); renderDashboard(); toast('Clear ho gayi','red');
+}
+
+// ════ SETTINGS ═══════════════════════════════════════════════
+function loadSettingsUI(){
+  document.getElementById('set-shopname').value=settings.shopname||'ITSZS Mart';
+  document.getElementById('set-phone').value=settings.phone||'03428422207';
+  document.getElementById('set-addr').value=settings.addr||'';
+  document.getElementById('set-footer').value=settings.footer||'';
+  document.getElementById('tog-lowstock').checked=settings.lowstock!==false;
+  document.getElementById('tog-autoprint').checked=settings.autoprint===true;
+  document.getElementById('tog-wa').checked=settings.wa!==false;
+}
+
+function saveSettings(){
+  settings.shopname =document.getElementById('set-shopname').value.trim()||'ITSZS Mart';
+  settings.phone    =document.getElementById('set-phone').value.trim()||'03428422207';
+  settings.addr     =document.getElementById('set-addr').value.trim();
+  settings.footer   =document.getElementById('set-footer').value;
+  settings.lowstock =document.getElementById('tog-lowstock').checked;
+  settings.autoprint=document.getElementById('tog-autoprint').checked;
+  settings.wa       =document.getElementById('tog-wa').checked;
+  save(); toast('Settings save ho gayi ✅');
+}
+
+// ════ LOW STOCK ALERT ═════════════════════════════════════════
+function checkLowStock(){
+  if(!settings.lowstock)return;
+  const low=Object.values(products).filter(p=>p.stock<=5);
+  const banner=document.getElementById('stock-banner');
+  if(low.length){
+    document.getElementById('stock-banner-text').textContent='⚠️ '+low.length+' items ka stock khatam hone wala hai: '+low.slice(0,3).map(p=>p.name).join(', ')+(low.length>3?'...':'');
+    banner.classList.add('show');
+  } else {
+    banner.classList.remove('show');
+  }
+}
+
+// ════ BACKUP / RESTORE ════════════════════════════════════════
+function backupData(){
+  const data={products,sales,settings,rcnt,date:new Date().toISOString()};
+  const a=document.createElement('a');
+  a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(data,null,2));
+  a.download='itszs_backup_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  toast('Backup download ho raha hai ⬇');
+}
+
+function restoreData(input){
+  const file=input.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      if(data.products) products=data.products;
+      if(data.sales)    sales=data.sales;
+      if(data.settings) settings={...DEF_SETTINGS,...data.settings};
+      if(data.rcnt)     rcnt=data.rcnt;
+      save();
+      renderProducts(); renderDashboard();
+      toast('Backup restore ho gaya ✅');
+    }catch(ex){toast('File galat hai!','red');}
+  };
+  reader.readAsText(file);
+  input.value='';
+}
+
+// ════ CSV EXPORT ══════════════════════════════════════════════
+function exportCSV(){
+  const rows=[['Barcode','Name','Category','Buy','Sell','Stock','Margin%']];
+  Object.entries(products).forEach(([bc,p])=>{
+    const m=p.buy>0?(((p.sell-p.buy)/p.buy)*100).toFixed(1):0;
+    rows.push([bc,p.name,p.cat||'General',p.buy,p.sell,p.stock,m]);
+  });
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(rows.map(r=>r.join(',')).join('\n'));
+  a.download='itszs_products.csv'; a.click();
+}
+
+// ════ INIT ════════════════════════════════════════════════════
+loadSettingsUI();
+checkLowStock();
+renderDashboard();
+</script>
+</body>
+</html>
